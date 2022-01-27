@@ -1,5 +1,6 @@
 import got, { OptionsOfJSONResponseBody } from 'got'
 import pMap from 'p-map'
+// const fs = require('fs');
 
 import { parsePageId, getPageContentBlockIds, uuidToId } from 'notion-utils'
 import * as notion from 'notion-types'
@@ -113,7 +114,7 @@ export class NotionAPI {
           const { collectionId, collectionViewId } = collectionInstance
           const collectionView =
             recordMap.collection_view[collectionViewId]?.value
-
+          console.info("Collecing collection: ", JSON.stringify(collectionView, null, 4))
           try {
             const collectionData = await this.getCollectionData(
               collectionId,
@@ -126,7 +127,10 @@ export class NotionAPI {
 
             // await fs.writeFile(
             //   `${collectionId}-${collectionViewId}.json`,
-            //   JSON.stringify(collectionData.result, null, 2)
+            //   JSON.stringify(collectionData.result, null, 2),
+            //   (err) => {
+            //     if (err) throw err;
+            //   }
             // )
 
             recordMap.block = {
@@ -390,6 +394,7 @@ export class NotionAPI {
           [reducerLabel]: {
             type: 'groups',
             groupBy,
+            ...(collectionView?.query2?.filter && {filter: collectionView?.query2?.filter}),
             groupSortPreference: groups.map((group) => group?.value),
             limit
           },
@@ -506,6 +511,7 @@ export class NotionAPI {
       ...gotOptions?.headers,
       'Content-Type': 'application/json'
     }
+    // console.info("Fetch body: ", JSON.stringify(body, null, 4))
 
     if (this._authToken) {
       headers.cookie = `token_v2=${this._authToken}`
