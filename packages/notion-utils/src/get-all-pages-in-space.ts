@@ -45,6 +45,7 @@ export async function getAllPagesInSpace(
 
     if (pageId && !pages[pageId] && !pendingPageIds.has(pageId)) {
       pendingPageIds.add(pageId)
+      console.info("Processing page", pageId)
 
       queue.add(async () => {
         try {
@@ -69,19 +70,43 @@ export async function getAllPagesInSpace(
             return
           }
 
-          Object.keys(page.block)
-            .filter((key) => {
-              const block = page.block[key]?.value
-              if (!block) return false
+          const processContentBlocks = (blockId: string) => {
+            const block = page.block[blockId]?.value
+            // console.log("Processing block", blockId, ": ", block)
+            if (!block) {
+              return
+            }
 
-              const isPage =
-                block.type === 'page' || block.type === 'collection_view_page'
+            const { content, type } = block
+            const isPage =
+              type === 'page' || type === 'collection_view' || type === 'collection_view_page'
+            if (isPage) {
+              console.info("  Entering page block", blockId, " with type:", type)
+              processPage(blockId)
+            }
 
-              // the space id check is important to limit traversal because pages
-              // can reference pages in other spaces
-              return isPage && block.space_id === rootSpaceId
-            })
-            .forEach((subPageId) => processPage(subPageId))
+            if (!content) return
+            
+            for (const blockId of content) {
+              processContentBlocks(blockId)
+            }
+          }
+          
+          processContentBlocks(pageId)
+
+          // Object.keys(page.block)
+          //   .filter((key) => {
+          //     const block = page.block[key]?.value
+          //     if (!block) return false
+
+          //     const isPage =
+          //       block.type === 'page' || block.type === 'collection_view_page'
+
+          //     // the space id check is important to limit traversal because pages
+          //     // can reference pages in other spaces
+          //     return isPage && block.space_id === rootSpaceId
+          //   })
+          //   .forEach((subPageId) => processPage(subPageId))
 
           // traverse collection item pages as they may contain subpages as well
           if (traverseCollections) {
@@ -89,11 +114,18 @@ export async function getAllPagesInSpace(
               page.collection_query
             )) {
               for (const collectionData of Object.values(collectionViews)) {
-                const { blockIds } = collectionData
+                let collectionGroups = [collectionData];
+                if (!collectionData.type) {
+                  collectionGroups = Object.values(collectionData);
+                }
+                // console.info("  Processing collection view:", collectionData)
+                for (const collectionResult of collectionGroups) {
+                  const { blockIds } = collectionResult
 
-                if (blockIds) {
-                  for (const collectionItemId of blockIds) {
-                    processPage(collectionItemId)
+                  if (blockIds) {
+                    for (const collectionItemId of blockIds) {
+                      processPage(collectionItemId)
+                    }
                   }
                 }
               }

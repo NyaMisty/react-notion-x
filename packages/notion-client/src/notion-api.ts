@@ -106,6 +106,7 @@ export class NotionAPI {
           return []
         }
       })
+      // console.log("Collection instances on this page:", allCollectionInstances)
 
       // fetch data for all collection view instances
       await pMap(
@@ -114,7 +115,7 @@ export class NotionAPI {
           const { collectionId, collectionViewId } = collectionInstance
           const collectionView =
             recordMap.collection_view[collectionViewId]?.value
-          console.info("Collecing collection: ", JSON.stringify(collectionView, null, 4))
+          // console.info("Collecing collection: ", JSON.stringify(collectionView, null, 4))
           try {
             const collectionData = await this.getCollectionData(
               collectionId,
