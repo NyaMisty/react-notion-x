@@ -269,7 +269,7 @@ export class NotionAPI {
     }
 
     return this.fetch<notion.PageChunk>({
-      endpoint: 'loadPageChunk',
+      endpoint: 'loadCachedPageChunk',
       body,
       gotOptions
     })
