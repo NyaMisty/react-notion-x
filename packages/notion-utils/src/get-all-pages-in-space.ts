@@ -1,6 +1,6 @@
+import { ExtendedRecordMap, PageMap } from 'notion-types'
 import PQueue from 'p-queue'
 
-import { ExtendedRecordMap, PageMap } from 'notion-types'
 import { parsePageId } from './parse-page-id'
 
 /**
@@ -45,7 +45,7 @@ export async function getAllPagesInSpace(
 
     if (pageId && !pages[pageId] && !pendingPageIds.has(pageId)) {
       pendingPageIds.add(pageId)
-      console.info("Processing page", pageId)
+      console.info('Processing page', pageId)
 
       queue.add(async () => {
         try {
@@ -64,10 +64,12 @@ export async function getAllPagesInSpace(
 
           const spaceId = page.block[pageId]?.value?.space_id
 
-          if (!rootSpaceId) {
-            rootSpaceId = spaceId
-          } else if (rootSpaceId !== spaceId) {
-            return
+          if (spaceId) {
+            if (!rootSpaceId) {
+              rootSpaceId = spaceId
+            } else if (rootSpaceId !== spaceId) {
+              return
+            }
           }
 
           const processContentBlocks = (blockId: string) => {
@@ -79,34 +81,58 @@ export async function getAllPagesInSpace(
 
             const { content, type } = block
             const isPage =
-              type === 'page' || type === 'collection_view' || type === 'collection_view_page'
+              type === 'page' ||
+              type === 'collection_view' ||
+              type === 'collection_view_page'
             if (isPage) {
-              console.info("  Entering page block", blockId, " with type:", type)
+              console.info(
+                '  Entering page block',
+                blockId,
+                ' with type:',
+                type
+              )
               processPage(blockId)
             }
 
             if (!content) return
-            
+
             for (const blockId of content) {
               processContentBlocks(blockId)
             }
           }
-          
+
           processContentBlocks(pageId)
 
-          // Object.keys(page.block)
-          //   .filter((key) => {
-          //     const block = page.block[key]?.value
-          //     if (!block) return false
+          /* eslint-disable */
+          // prettier-ignore
+          if (false) {
+          Object.keys(page.block)
+            .filter((key) => {
+              const block = page.block[key]?.value
+              if (!block) return false
 
-          //     const isPage =
-          //       block.type === 'page' || block.type === 'collection_view_page'
+              if (
+                block.type !== 'page' &&
+                block.type !== 'collection_view_page'
+              ) {
+                return false
+              }
 
-          //     // the space id check is important to limit traversal because pages
-          //     // can reference pages in other spaces
-          //     return isPage && block.space_id === rootSpaceId
-          //   })
-          //   .forEach((subPageId) => processPage(subPageId))
+              // the space id check is important to limit traversal because pages
+              // can reference pages in other spaces
+              if (
+                rootSpaceId &&
+                block.space_id &&
+                block.space_id !== rootSpaceId
+              ) {
+                return false
+              }
+
+              return true
+            })
+            .forEach((subPageId) => processPage(subPageId))
+          }
+          /* eslint-enable */
 
           // traverse collection item pages as they may contain subpages as well
           if (traverseCollections) {
@@ -114,9 +140,9 @@ export async function getAllPagesInSpace(
               page.collection_query
             )) {
               for (const collectionData of Object.values(collectionViews)) {
-                let collectionGroups = [collectionData];
+                let collectionGroups = [collectionData]
                 if (!collectionData.type) {
-                  collectionGroups = Object.values(collectionData);
+                  collectionGroups = Object.values(collectionData)
                 }
                 // console.info("  Processing collection view:", collectionData)
                 for (const collectionResult of collectionGroups) {

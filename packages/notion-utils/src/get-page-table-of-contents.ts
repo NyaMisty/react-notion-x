@@ -1,4 +1,5 @@
 import * as types from 'notion-types'
+
 import { getTextContent } from './get-text-content'
 
 export interface TableOfContentsEntry {
@@ -59,7 +60,7 @@ export const getPageTableOfContents = (
   // they should never jump more than one at a time.
   for (const tocItem of toc) {
     const { indentLevel } = tocItem
-    let actual = indentLevel
+    const actual = indentLevel
 
     do {
       const prevIndent = indentLevelStack[indentLevelStack.length - 1]
@@ -77,6 +78,8 @@ export const getPageTableOfContents = (
       } else {
         indentLevelStack.pop()
       }
+
+      // eslint-disable-next-line no-constant-condition
     } while (true)
   }
 
