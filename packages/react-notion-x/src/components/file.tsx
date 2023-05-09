@@ -11,15 +11,17 @@ export const File: React.FC<{
   block: FileBlock
   className?: string
 }> = ({ block, className }) => {
-  const { components, recordMap } = useNotionContext()
+  const { components, mapImageUrl, recordMap } = useNotionContext()
   const source =
     recordMap.signed_urls[block.id] || block.properties?.source?.[0]?.[0]
+
+  const mappedSource = mapImageUrl(source, block)
 
   return (
     <div className={cs('notion-file', className)}>
       <components.Link
         className='notion-file-link'
-        href={source}
+        href={mappedSource}
         target='_blank'
         rel='noopener noreferrer'
       >
