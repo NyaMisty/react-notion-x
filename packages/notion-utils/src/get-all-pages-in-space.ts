@@ -76,13 +76,29 @@ export async function getAllPagesInSpace(
             }
           }
 
-          for (const subPageId of Object.keys(page.block).filter((key) => {
+          const enumBlockIdsByContent = async (blockId: string) => {
+            const block = page.block[blockId]?.value
+            // console.log("Processing block", blockId, ": ", block)
+            if (!block || !block.content) {
+              return []
+            }
+            const ret = [blockId]
+            for (const blockId of block.content) {
+              ret.push(...(await enumBlockIdsByContent(blockId)))
+            }
+            return ret
+          }
+
+          const blockIds = await enumBlockIdsByContent(pageId)
+          // let blockIds = Object.keys(page.block)
+          for (const subPageId of blockIds.filter((key) => {
             const block = page.block[key]?.value
             if (!block || block.alive === false) return false
 
             if (
               block.type !== 'page' &&
-              block.type !== 'collection_view_page'
+              block.type !== 'collection_view_page' &&
+              block.type !== 'collection_view'
             ) {
               return false
             }
@@ -97,6 +113,10 @@ export async function getAllPagesInSpace(
               return false
             }
 
+            if (!block.content) {
+              return false
+            }
+
             return true
           })) {
             void processPage(subPageId, depth + 1)
@@ -107,7 +127,16 @@ export async function getAllPagesInSpace(
             for (const collectionViews of Object.values(
               page.collection_query
             )) {
-              for (const collectionData of Object.values(collectionViews)) {
+              for (const collectionData of Object.values(
+                collectionViews
+              ).flatMap((collectionData) => {
+                let collectionGroups = [collectionData]
+                if (!collectionData.type) {
+                  collectionGroups = Object.values(collectionData)
+                }
+                // console.info("  Processing collection view:", collectionData)
+                return collectionGroups
+              })) {
                 const { blockIds } = collectionData
 
                 if (blockIds) {
