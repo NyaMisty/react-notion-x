@@ -1,10 +1,6 @@
-import * as React from 'react'
+import { type ExtendedRecordMap } from 'notion-types'
+import { defaultMapPageUrl, getAllPagesInSpace } from 'notion-utils'
 
-import { ExtendedRecordMap } from 'notion-types'
-import { getAllPagesInSpace } from 'notion-utils'
-import { defaultMapPageUrl } from 'react-notion-x'
-
-import * as notion from '../lib/notion'
 import { NotionPage } from '../components/NotionPage'
 import {
   isDev,
@@ -13,8 +9,9 @@ import {
   rootNotionPageId,
   rootNotionSpaceId
 } from '../lib/config'
+import * as notion from '../lib/notion'
 
-export const getStaticProps = async (context) => {
+export const getStaticProps = async (context: any) => {
   const pageId = context.params.pageId as string
   const recordMap = await notion.getPage(pageId)
 
@@ -22,7 +19,11 @@ export const getStaticProps = async (context) => {
     props: {
       recordMap
     },
-    revalidate: 10
+    // cache for 60 minutes
+    // NOTE: you'll likely want to use a shorter cache time for your app, but
+    // I'm bumping this up because my vercel bill keeps increasing due to people
+    // abusing the demo to host their own sites.
+    revalidate: 60 * 60
   }
 }
 

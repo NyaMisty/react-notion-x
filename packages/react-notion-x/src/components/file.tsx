@@ -1,20 +1,34 @@
-import * as React from 'react'
-
-import { FileBlock } from 'notion-types'
+import type React from 'react'
+import { type FileBlock } from 'notion-types'
 
 import { useNotionContext } from '../context'
 import { FileIcon } from '../icons/file-icon'
 import { cs } from '../utils'
 import { Text } from './text'
 
-export const File: React.FC<{
+export function File({
+  block,
+  className
+}: {
   block: FileBlock
   className?: string
-}> = ({ block, className }) => {
-  const { components, mapImageUrl, recordMap } = useNotionContext()
-  const source =
+}) {
+  const { components, recordMap } = useNotionContext()
+
+  let source =
     recordMap.signed_urls[block.id] || block.properties?.source?.[0]?.[0]
 
+  if (!source) {
+    return null
+  }
+
+  if (block.space_id) {
+    const url = new URL(source)
+    url.searchParams.set('spaceId', block.space_id)
+    source = url.toString()
+  }
+
+  const { mapImageUrl } = useNotionContext()
   const mappedSource = mapImageUrl(source, block)
 
   return (
