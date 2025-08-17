@@ -19,7 +19,7 @@ export function Header({
     <header className='notion-header'>
       <div className='notion-nav-header'>
         <Breadcrumbs block={block} />
-        <Search block={block} />
+        {/* <Search block={block} /> */}
       </div>
     </header>
   )
